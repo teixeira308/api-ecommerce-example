@@ -4,6 +4,7 @@ import (
 	"ecommerce-api/internal/interface/dto"
 	"ecommerce-api/internal/usecase/order"
 	"encoding/json"
+	"errors"
 	"net/http"
 )
 
@@ -22,15 +23,18 @@ func orderRespondWithError(w http.ResponseWriter, code int, message string) {
 type OrderHandler struct {
 	CreateOrder  *order.CreateOrder
 	GetAllOrders *order.GetAllOrders
+	GetOrder     *order.GetOrder
 }
 
 func NewOrderHandler(
 	createOrder *order.CreateOrder,
 	getAllOrders *order.GetAllOrders,
+	getOrder *order.GetOrder,
 ) *OrderHandler {
 	return &OrderHandler{
 		CreateOrder:  createOrder,
 		GetAllOrders: getAllOrders,
+		GetOrder:     getOrder,
 	}
 }
 
@@ -88,4 +92,32 @@ func (h *OrderHandler) Create(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(response)
+}
+
+func (h *OrderHandler) Get(w http.ResponseWriter, r *http.Request) {
+	orderID := r.PathValue("id")
+	if orderID == "" {
+		ItemRespondWithError(w, http.StatusBadRequest, "Order ID is required to get")
+		return
+	}
+
+	orderInput := order.GetOrderInput{
+		ID: orderID,
+	}
+
+	fetchedOrder, err := h.GetOrder.Execute(orderInput) // Changed variable name from 'payment' to 'fetchedItem'
+	if err != nil {
+		// It's better to check the specific error returned by the use case (e.g., from repository)
+		// For now, a generic "item not found" check is used.
+		if errors.Is(err, errors.New("Order not found")) { // Changed from specific string comparison to errors.Is
+			ItemRespondWithError(w, http.StatusNotFound, err.Error())
+			return
+		}
+		ItemRespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(fetchedOrder) // Changed variable name
 }

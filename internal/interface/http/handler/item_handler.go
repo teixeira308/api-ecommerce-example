@@ -8,8 +8,6 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-
-	"github.com/go-chi/chi/v5"
 )
 
 // ErrorResponse represents a standardized JSON error response
@@ -70,9 +68,9 @@ func (h *ItemHandler) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *ItemHandler) Update(w http.ResponseWriter, r *http.Request) {
-	itemID := chi.URLParam(r, "id")
+	itemID := r.PathValue("id")
 	if itemID == "" {
-		ItemRespondWithError(w, http.StatusBadRequest, "item ID is required")
+		ItemRespondWithError(w, http.StatusBadRequest, "item ID is required to update")
 		return
 	}
 
@@ -105,9 +103,9 @@ func (h *ItemHandler) Update(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *ItemHandler) Get(w http.ResponseWriter, r *http.Request) {
-	itemID := chi.URLParam(r, "id")
+	itemID := r.PathValue("id")
 	if itemID == "" {
-		ItemRespondWithError(w, http.StatusBadRequest, "item ID is required")
+		ItemRespondWithError(w, http.StatusBadRequest, "item ID is required to get")
 		return
 	}
 
@@ -163,9 +161,9 @@ func (h *ItemHandler) List(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *ItemHandler) Delete(w http.ResponseWriter, r *http.Request) {
-	itemID := chi.URLParam(r, "id")
+	itemID := r.PathValue("id")
 	if itemID == "" {
-		ItemRespondWithError(w, http.StatusBadRequest, "item ID is required")
+		ItemRespondWithError(w, http.StatusBadRequest, "item ID is required to delete")
 		return
 	}
 

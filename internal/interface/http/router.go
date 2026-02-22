@@ -21,6 +21,7 @@ func NewRouter(
 
 	mux.HandleFunc("POST /orders", orderHandler.Create)
 	mux.HandleFunc("GET /orders", orderHandler.GetAll)
+	mux.HandleFunc("GET /orders/{id}", orderHandler.Get)
 
 	return mux
 }

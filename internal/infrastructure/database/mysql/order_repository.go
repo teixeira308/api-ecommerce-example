@@ -62,3 +62,15 @@ func (r *OrderRepository) FindAll(page, limit int) ([]*entity.Order, error) {
 
 	return orders, nil
 }
+
+func (r *OrderRepository) FindByID(id string) (*entity.Order, error) {
+	order := &entity.Order{}
+	err := r.DB.QueryRow(`SELECT id, item_id, quantity, total, created_at FROM orders WHERE id = ?`, id).Scan(&order.ID, &order.ItemID, &order.Quantity, &order.Total, &order.CreatedAt)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil // Or return a specific "not found" error
+		}
+		return nil, err
+	}
+	return order, nil
+}

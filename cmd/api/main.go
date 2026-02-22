@@ -38,6 +38,7 @@ func main() {
 	// Order Use Cases
 	createOrder := orderUsecase.NewCreateOrderUseCase(orderRepo)
 	getAllOrders := orderUsecase.NewGetAllOrdersUseCase(orderRepo)
+	getOrder := orderUsecase.NewGetOrderUseCase(orderRepo)
 
 	// Handlers
 	itemHandler := httpHandler.NewItemHandler(
@@ -51,6 +52,7 @@ func main() {
 	orderHandler := httpHandler.NewOrderHandler(
 		createOrder,
 		getAllOrders,
+		getOrder,
 	)
 
 	router := httpRouter.NewRouter(

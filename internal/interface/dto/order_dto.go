@@ -25,3 +25,7 @@ type GetOrderResponse struct {
 	Total     float64   `json:"total"`
 	CreatedAt time.Time `json:"created_at"`
 }
+
+type GetOrderRequest struct {
+	ItemID string `json:"item_id"`
+}
