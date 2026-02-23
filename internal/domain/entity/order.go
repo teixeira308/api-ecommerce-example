@@ -4,8 +4,8 @@ import "time"
 
 type Order struct {
 	ID        string
-	ItemID    string
-	Quantity  int
+	Items     []*OrderItem
 	Total     float64
+	Status    string
 	CreatedAt time.Time
 }

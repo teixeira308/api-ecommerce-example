@@ -4,28 +4,38 @@ package dto
 
 import "time"
 
+type OrderItemRequest struct {
+	ItemID   string `json:"item_id"`
+	Quantity int    `json:"quantity"`
+}
+
 type CreateOrderRequest struct {
-	ItemID   string  `json:"item_id"`
-	Quantity int     `json:"quantity"`
-	Total    float64 `json:"total"`
+	Items []OrderItemRequest `json:"items"`
+}
+
+type UpdateOrderStatusRequest struct {
+	Status string `json:"status"`
+}
+
+type OrderItemResponse struct {
+	ItemID    string    `json:"item_id"`
+	Quantity  int       `json:"quantity"`
+	Subtotal  float64   `json:"subtotal"`
+	CreatedAt time.Time `json:"created_at"`
 }
 
 type CreateOrderResponse struct {
-	ID        string    `json:"id"`
-	ItemID    string    `json:"item_id"`
-	Quantity  int       `json:"quantity"`
-	Total     float64   `json:"total"`
-	CreatedAt time.Time `json:"created_at"`
+	ID        string              `json:"id"`
+	Items     []OrderItemResponse `json:"items"`
+	Total     float64             `json:"total"`
+	Status    string              `json:"status"`
+	CreatedAt time.Time           `json:"created_at"`
 }
 
 type GetOrderResponse struct {
-	ID        string    `json:"id"`
-	ItemID    string    `json:"item_id"`
-	Quantity  int       `json:"quantity"`
-	Total     float64   `json:"total"`
-	CreatedAt time.Time `json:"created_at"`
-}
-
-type GetOrderRequest struct {
-	ItemID string `json:"item_id"`
+	ID        string              `json:"id"`
+	Items     []OrderItemResponse `json:"items"`
+	Total     float64             `json:"total"`
+	Status    string              `json:"status"`
+	CreatedAt time.Time           `json:"created_at"`
 }

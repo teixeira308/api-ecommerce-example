@@ -3,30 +3,63 @@ package order
 import (
 	"ecommerce-api/internal/domain/entity"
 	"ecommerce-api/internal/domain/repository"
+	"ecommerce-api/internal/interface/dto"
+	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 )
 
 type CreateOrder struct {
-	Repo repository.OrderRepository
+	OrderRepo repository.OrderRepository
+	ItemRepo  repository.ItemRepository
 }
 
-func NewCreateOrderUseCase(repo repository.OrderRepository) *CreateOrder {
+func NewCreateOrderUseCase(orderRepo repository.OrderRepository, itemRepo repository.ItemRepository) *CreateOrder {
 	return &CreateOrder{
-		Repo: repo,
+		OrderRepo: orderRepo,
+		ItemRepo:  itemRepo,
 	}
 }
 
-func (uc *CreateOrder) Execute(itemID string, quantity int, price float64) (*entity.Order, error) {
+func (uc *CreateOrder) Execute(itemsRequest []dto.OrderItemRequest) (*entity.Order, error) {
+	orderItems := make([]*entity.OrderItem, len(itemsRequest))
+	var total float64
+
+	for i, itemReq := range itemsRequest {
+		item, err := uc.ItemRepo.FindByID(itemReq.ItemID)
+		if err != nil {
+			return nil, fmt.Errorf("item with ID %s not found: %w", itemReq.ItemID, err)
+		}
+		if item == nil {
+			return nil, fmt.Errorf("item with ID %s not found", itemReq.ItemID)
+		}
+
+		subtotal := float64(itemReq.Quantity) * item.Price
+		total += subtotal
+
+		orderItems[i] = &entity.OrderItem{
+			ID:       uuid.NewString(),
+			ItemID:   itemReq.ItemID,
+			Quantity: itemReq.Quantity,
+			Subtotal: subtotal,
+		}
+	}
 
 	order := &entity.Order{
-		ID:       uuid.NewString(),
-		ItemID:   itemID,
-		Quantity: quantity,
-		Total:    float64(quantity) * price,
+		ID:        uuid.NewString(),
+		Items:     orderItems,
+		Total:     total,
+		Status:    "pending",
+		CreatedAt: time.Now(),
 	}
 
-	err := uc.Repo.Save(order)
+	for _, oi := range order.Items {
+		oi.OrderID = order.ID
+		oi.CreatedAt = order.CreatedAt
+	}
+
+	err := uc.OrderRepo.Save(order)
 	if err != nil {
 		return nil, err
 	}

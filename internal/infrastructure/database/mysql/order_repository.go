@@ -15,29 +15,53 @@ func NewOrderRepository(db *sql.DB) *OrderRepository {
 }
 
 func (r *OrderRepository) Save(order *entity.Order) error {
+	tx, err := r.DB.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback() // Rollback on error
 
 	query := `
-		INSERT INTO orders (id, item_id, quantity, total)
+		INSERT INTO orders (id, total, status, created_at)
 		VALUES (?, ?, ?, ?)
 	`
-
-	_, err := r.DB.Exec(query, order.ID, order.ItemID, order.Quantity, order.Total)
+	_, err = tx.Exec(query, order.ID, order.Total, order.Status, order.CreatedAt)
 	if err != nil {
 		return err
 	}
 
-	return r.DB.QueryRow(
-		`SELECT created_at FROM orders WHERE id = ?`,
-		order.ID,
-	).Scan(&order.CreatedAt)
+	for _, item := range order.Items {
+		itemQuery := `
+			INSERT INTO order_items (id, order_id, item_id, quantity, subtotal, created_at)
+			VALUES (?, ?, ?, ?, ?, ?)
+		`
+		_, err = tx.Exec(itemQuery, item.ID, item.OrderID, item.ItemID, item.Quantity, item.Subtotal, item.CreatedAt)
+		if err != nil {
+			return err
+		}
+	}
+
+	return tx.Commit()
+}
+
+func (r *OrderRepository) SaveOrderItem(orderItem *entity.OrderItem) error {
+	query := `
+		INSERT INTO order_items (id, order_id, item_id, quantity, subtotal, created_at)
+		VALUES (?, ?, ?, ?, ?, ?)
+	`
+	_, err := r.DB.Exec(query, orderItem.ID, orderItem.OrderID, orderItem.ItemID, orderItem.Quantity, orderItem.Subtotal, orderItem.CreatedAt)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (r *OrderRepository) FindAll(page, limit int) ([]*entity.Order, error) {
 	offset := (page - 1) * limit
-	query := `SELECT id, item_id, quantity, total, created_at FROM orders LIMIT ? OFFSET ?`
+	query := `SELECT id, total, status, created_at FROM orders LIMIT ? OFFSET ?`
 	rows, err := r.DB.Query(query, limit, offset)
 	if err != nil {
-		return nil, fmt.Errorf("error querying payments: %w", err)
+		return nil, fmt.Errorf("error querying orders: %w", err)
 	}
 	defer rows.Close()
 
@@ -46,13 +70,18 @@ func (r *OrderRepository) FindAll(page, limit int) ([]*entity.Order, error) {
 		order := &entity.Order{}
 		if err := rows.Scan(
 			&order.ID,
-			&order.ItemID,
-			&order.Quantity,
 			&order.Total,
+			&order.Status,
 			&order.CreatedAt,
 		); err != nil {
-			return nil, fmt.Errorf("error scanning payment row: %w", err)
+			return nil, fmt.Errorf("error scanning order row: %w", err)
 		}
+
+		items, err := r.FindOrderItemsByOrderID(order.ID)
+		if err != nil {
+			return nil, err
+		}
+		order.Items = items
 		orders = append(orders, order)
 	}
 
@@ -65,12 +94,58 @@ func (r *OrderRepository) FindAll(page, limit int) ([]*entity.Order, error) {
 
 func (r *OrderRepository) FindByID(id string) (*entity.Order, error) {
 	order := &entity.Order{}
-	err := r.DB.QueryRow(`SELECT id, item_id, quantity, total, created_at FROM orders WHERE id = ?`, id).Scan(&order.ID, &order.ItemID, &order.Quantity, &order.Total, &order.CreatedAt)
+	err := r.DB.QueryRow(`SELECT id, total, status, created_at FROM orders WHERE id = ?`, id).Scan(&order.ID, &order.Total, &order.Status, &order.CreatedAt)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil // Or return a specific "not found" error
 		}
 		return nil, err
 	}
+
+	items, err := r.FindOrderItemsByOrderID(order.ID)
+	if err != nil {
+		return nil, err
+	}
+	order.Items = items
 	return order, nil
+}
+
+func (r *OrderRepository) FindOrderItemsByOrderID(orderID string) ([]*entity.OrderItem, error) {
+	query := `SELECT id, order_id, item_id, quantity, subtotal, created_at FROM order_items WHERE order_id = ?`
+	rows, err := r.DB.Query(query, orderID)
+	if err != nil {
+		return nil, fmt.Errorf("error querying order items: %w", err)
+	}
+	defer rows.Close()
+
+	orderItems := make([]*entity.OrderItem, 0)
+	for rows.Next() {
+		orderItem := &entity.OrderItem{}
+		if err := rows.Scan(
+			&orderItem.ID,
+			&orderItem.OrderID,
+			&orderItem.ItemID,
+			&orderItem.Quantity,
+			&orderItem.Subtotal,
+			&orderItem.CreatedAt,
+		); err != nil {
+			return nil, fmt.Errorf("error scanning order item row: %w", err)
+		}
+		orderItems = append(orderItems, orderItem)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("error during order items rows iteration: %w", err)
+	}
+
+	return orderItems, nil
+}
+
+func (r *OrderRepository) UpdateStatus(order *entity.Order) error {
+	query := `UPDATE orders SET status = ? WHERE id = ?`
+	_, err := r.DB.Exec(query, order.Status, order.ID)
+	if err != nil {
+		return err
+	}
+	return nil
 }

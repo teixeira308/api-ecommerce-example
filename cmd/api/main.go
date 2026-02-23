@@ -36,9 +36,10 @@ func main() {
 	deleteItem := itemUsecase.NewDeleteItemUseCase(itemRepo)
 
 	// Order Use Cases
-	createOrder := orderUsecase.NewCreateOrderUseCase(orderRepo)
+	createOrder := orderUsecase.NewCreateOrderUseCase(orderRepo, itemRepo)
 	getAllOrders := orderUsecase.NewGetAllOrdersUseCase(orderRepo)
 	getOrder := orderUsecase.NewGetOrderUseCase(orderRepo)
+	updateOrderStatus := orderUsecase.NewUpdateOrderStatusUseCase(orderRepo)
 
 	// Handlers
 	itemHandler := httpHandler.NewItemHandler(
@@ -53,6 +54,7 @@ func main() {
 		createOrder,
 		getAllOrders,
 		getOrder,
+		updateOrderStatus,
 	)
 
 	router := httpRouter.NewRouter(
