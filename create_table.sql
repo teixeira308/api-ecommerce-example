@@ -9,6 +9,7 @@ CREATE TABLE orders (
     id VARCHAR(36) PRIMARY KEY,
     total DECIMAL(10,2) NOT NULL,
     status VARCHAR(50) NOT NULL DEFAULT 'pending',
+    method VARCHAR(36),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -22,3 +23,5 @@ CREATE TABLE order_items (
     FOREIGN KEY (order_id) REFERENCES orders(id),
     FOREIGN KEY (item_id) REFERENCES items(id)
 );
+
+

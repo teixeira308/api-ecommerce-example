@@ -22,10 +22,10 @@ func (r *OrderRepository) Save(order *entity.Order) error {
 	defer tx.Rollback() // Rollback on error
 
 	query := `
-		INSERT INTO orders (id, total, status, created_at)
-		VALUES (?, ?, ?, ?)
+		INSERT INTO orders (id, total, status, method, created_at)
+		VALUES (?, ?, ?, ?, ?)
 	`
-	_, err = tx.Exec(query, order.ID, order.Total, order.Status, order.CreatedAt)
+	_, err = tx.Exec(query, order.ID, order.Total, order.Status, order.Method, order.CreatedAt)
 	if err != nil {
 		return err
 	}
@@ -58,7 +58,7 @@ func (r *OrderRepository) SaveOrderItem(orderItem *entity.OrderItem) error {
 
 func (r *OrderRepository) FindAll(page, limit int) ([]*entity.Order, error) {
 	offset := (page - 1) * limit
-	query := `SELECT id, total, status, created_at FROM orders order by created_at LIMIT ? OFFSET ?`
+	query := `SELECT id, total, status, method, created_at FROM orders order by created_at LIMIT ? OFFSET ?`
 	rows, err := r.DB.Query(query, limit, offset)
 	if err != nil {
 		return nil, fmt.Errorf("error querying orders: %w", err)
@@ -72,6 +72,7 @@ func (r *OrderRepository) FindAll(page, limit int) ([]*entity.Order, error) {
 			&order.ID,
 			&order.Total,
 			&order.Status,
+			&order.Method,
 			&order.CreatedAt,
 		); err != nil {
 			return nil, fmt.Errorf("error scanning order row: %w", err)
@@ -94,7 +95,7 @@ func (r *OrderRepository) FindAll(page, limit int) ([]*entity.Order, error) {
 
 func (r *OrderRepository) FindByID(id string) (*entity.Order, error) {
 	order := &entity.Order{}
-	err := r.DB.QueryRow(`SELECT id, total, status, created_at FROM orders WHERE id = ?`, id).Scan(&order.ID, &order.Total, &order.Status, &order.CreatedAt)
+	err := r.DB.QueryRow(`SELECT id, total, status, method, created_at FROM orders WHERE id = ?`, id).Scan(&order.ID, &order.Total, &order.Status, &order.Method, &order.CreatedAt)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil // Or return a specific "not found" error

@@ -10,7 +10,8 @@ type OrderItemRequest struct {
 }
 
 type CreateOrderRequest struct {
-	Items []OrderItemRequest `json:"items"`
+	Items  []OrderItemRequest `json:"items"`
+	Method string             `json:"method"`
 }
 
 type UpdateOrderStatusRequest struct {
@@ -29,6 +30,7 @@ type CreateOrderResponse struct {
 	Items     []OrderItemResponse `json:"items"`
 	Total     float64             `json:"total"`
 	Status    string              `json:"status"`
+	Method    string              `json:"method"`
 	CreatedAt time.Time           `json:"created_at"`
 }
 
@@ -37,5 +39,6 @@ type GetOrderResponse struct {
 	Items     []OrderItemResponse `json:"items"`
 	Total     float64             `json:"total"`
 	Status    string              `json:"status"`
+	Method    string              `json:"method"`
 	CreatedAt time.Time           `json:"created_at"`
 }

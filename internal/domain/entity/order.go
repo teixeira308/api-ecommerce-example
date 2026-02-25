@@ -7,5 +7,6 @@ type Order struct {
 	Items     []*OrderItem
 	Total     float64
 	Status    string
+	Method    string
 	CreatedAt time.Time
 }

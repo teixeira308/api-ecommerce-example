@@ -84,6 +84,7 @@ func (h *OrderHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 			Items:     itemsResponse,
 			Total:     ord.Total,
 			Status:    ord.Status,
+			Method:    ord.Method,
 			CreatedAt: ord.CreatedAt,
 		}
 	}
@@ -101,7 +102,7 @@ func (h *OrderHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ord, err := h.CreateOrder.Execute(input.Items)
+	ord, err := h.CreateOrder.Execute(input.Items, input.Method)
 	if err != nil {
 		orderRespondWithError(w, http.StatusBadRequest, err.Error())
 		return
@@ -122,6 +123,7 @@ func (h *OrderHandler) Create(w http.ResponseWriter, r *http.Request) {
 		Items:     itemsResponse,
 		Total:     ord.Total,
 		Status:    ord.Status,
+		Method:    ord.Method,
 		CreatedAt: ord.CreatedAt,
 	}
 
@@ -171,6 +173,7 @@ func (h *OrderHandler) Get(w http.ResponseWriter, r *http.Request) {
 		Items:     itemsResponse,
 		Total:     fetchedOrder.Total,
 		Status:    fetchedOrder.Status,
+		Method:    fetchedOrder.Method,
 		CreatedAt: fetchedOrder.CreatedAt,
 	}
 

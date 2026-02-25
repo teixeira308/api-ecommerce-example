@@ -27,7 +27,7 @@ func NewCreateOrderUseCase(orderRepo repository.OrderRepository, itemRepo reposi
 	}
 }
 
-func (uc *CreateOrder) Execute(itemsRequest []dto.OrderItemRequest) (*entity.Order, error) {
+func (uc *CreateOrder) Execute(itemsRequest []dto.OrderItemRequest, method string) (*entity.Order, error) {
 	orderItems := make([]*entity.OrderItem, len(itemsRequest))
 	var total float64
 
@@ -56,6 +56,7 @@ func (uc *CreateOrder) Execute(itemsRequest []dto.OrderItemRequest) (*entity.Ord
 		Items:     orderItems,
 		Total:     total,
 		Status:    "pending",
+		Method:    method,
 		CreatedAt: time.Now(),
 	}
 
