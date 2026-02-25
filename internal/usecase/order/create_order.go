@@ -1,8 +1,11 @@
 package order
 
 import (
+	"context"
 	"ecommerce-api/internal/domain/entity"
+	"ecommerce-api/internal/domain/event"
 	"ecommerce-api/internal/domain/repository"
+	"ecommerce-api/internal/infrastructure/broker"
 	"ecommerce-api/internal/interface/dto"
 	"fmt"
 	"time"
@@ -13,12 +16,14 @@ import (
 type CreateOrder struct {
 	OrderRepo repository.OrderRepository
 	ItemRepo  repository.ItemRepository
+	Broker    *broker.RabbitMQClient
 }
 
-func NewCreateOrderUseCase(orderRepo repository.OrderRepository, itemRepo repository.ItemRepository) *CreateOrder {
+func NewCreateOrderUseCase(orderRepo repository.OrderRepository, itemRepo repository.ItemRepository, broker *broker.RabbitMQClient) *CreateOrder {
 	return &CreateOrder{
 		OrderRepo: orderRepo,
 		ItemRepo:  itemRepo,
+		Broker:    broker,
 	}
 }
 
@@ -62,6 +67,21 @@ func (uc *CreateOrder) Execute(itemsRequest []dto.OrderItemRequest) (*entity.Ord
 	err := uc.OrderRepo.Save(order)
 	if err != nil {
 		return nil, err
+	}
+
+	// Publish payment.requested event
+	paymentRequestedEvent := event.PaymentRequested{
+		Event:       "payment.requested",
+		OrderID:     order.ID,
+		Amount:      order.Total,
+		Currency:    "BRL", // Assuming BRL as currency as per spec
+		RequestedAt: time.Now(),
+	}
+
+	err = uc.Broker.Publish(context.Background(), "payments.exchange", "payment.requested", paymentRequestedEvent)
+	if err != nil {
+		// Log the error but don't fail the order creation, as per eventual consistency
+		fmt.Printf("Error publishing payment.requested event for order %s: %v\n", order.ID, err)
 	}
 
 	return order, nil

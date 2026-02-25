@@ -58,7 +58,7 @@ func (r *OrderRepository) SaveOrderItem(orderItem *entity.OrderItem) error {
 
 func (r *OrderRepository) FindAll(page, limit int) ([]*entity.Order, error) {
 	offset := (page - 1) * limit
-	query := `SELECT id, total, status, created_at FROM orders LIMIT ? OFFSET ?`
+	query := `SELECT id, total, status, created_at FROM orders order by created_at LIMIT ? OFFSET ?`
 	rows, err := r.DB.Query(query, limit, offset)
 	if err != nil {
 		return nil, fmt.Errorf("error querying orders: %w", err)

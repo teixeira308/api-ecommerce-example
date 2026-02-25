@@ -1,6 +1,7 @@
 package order
 
 import (
+	"context"
 	"ecommerce-api/internal/domain/repository"
 )
 
@@ -19,7 +20,7 @@ func NewUpdateOrderStatusUseCase(repo repository.OrderRepository) *UpdateOrderSt
 	}
 }
 
-func (uc *UpdateOrderStatus) Execute(input UpdateOrderStatusInput) error {
+func (uc *UpdateOrderStatus) Execute(ctx context.Context, input UpdateOrderStatusInput) error {
 	order, err := uc.Repo.FindByID(input.ID)
 	if err != nil {
 		return err

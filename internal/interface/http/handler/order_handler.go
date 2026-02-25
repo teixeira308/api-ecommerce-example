@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"ecommerce-api/internal/domain/repository"
 	"ecommerce-api/internal/interface/dto"
 	"ecommerce-api/internal/usecase/order"
@@ -191,7 +192,7 @@ func (h *OrderHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := h.UpdateOrderStatus.Execute(order.UpdateOrderStatusInput{
+	err := h.UpdateOrderStatus.Execute(context.Background(), order.UpdateOrderStatusInput{
 		ID:     orderID,
 		Status: input.Status,
 	})
